@@ -1,0 +1,2 @@
+class MissingParams(Exception):
+    pass
