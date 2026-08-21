@@ -1,9 +1,11 @@
 from exceptions import MissingParams
+from database.schemas import IncidentSchema
+from datetime import datetime
 
 
 class DepositValidator:
     def __init__(self):
-        pass
+        self._incident_list = []
 
     def _check_thrashing_cold_engine(self, coolant_temp, oil_temp,
                                      rpm, engine_load):
@@ -26,6 +28,11 @@ class DepositValidator:
 
         return False
 
+    def _create_schema(self, coolant_temp, oil_temp,
+                       rpm, engine_load, desc: str) -> IncidentSchema:
+        new_incident = IncidentSchema(1, desc, datetime.now(), 1, 0, 0)
+        return new_incident
+
     def check_deposit_rules(self, data: dict) -> dict:
         coolant_temp = data.get('coolant_temp')
         oil_temp = data.get('oil_temp')
@@ -34,16 +41,30 @@ class DepositValidator:
 
         res = {
             'status': True,
+            'schemas': None,
             'comment': 'Jazda prawidłowa'
         }
+        is_okay = True
 
+        comment = 'Jazda prawidłowa'
         try:
             if self._check_thrashing_cold_engine(coolant_temp, oil_temp,
                                                  rpm, load):
-                res['status'] = False
-                res['comment'] = "ALARM: Agresywna jazda na zimnym silniku (wysokie obciążenie/RPM)"
+                is_okay = False
+                comment = "ALARM: Agresywna jazda na zimnym silniku (wysokie obciążenie/RPM)"
         except MissingParams:
-            res['status'] = False
-            res['comment'] = "BŁĄD: Brak wystarczających danych z czujników do oceny"
+            is_okay = False
+            comment = "BŁĄD: Brak wystarczających danych z czujników do oceny"
+
+        if is_okay:
+            self._incident_list.clear()
+        else:
+            new_schema = self._create_schema(coolant_temp, oil_temp,
+                                             rpm, load, comment)
+            self._incident_list.append(new_schema)
+            if len(self._incident_list) > 3:
+                res['status'] = False
+                res['schemas'] = self._incident_list
+                res['comment'] = comment
 
         return res

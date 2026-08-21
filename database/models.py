@@ -1,4 +1,4 @@
-from database.config import Base
+from database.db_config import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
 
@@ -16,8 +16,8 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     rental_id = Column(Integer, ForeignKey('rentals.id'))
-    email = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    password_hash = Column(String, nullable=False)
 
     rental = relationship('Rental', back_populates='workers')
 
@@ -25,7 +25,7 @@ class User(Base):
 class Car(Base):
     __tablename__ = 'cars'
     id = Column(Integer, primary_key=True)
-    vin = Column(String)
+    vin = Column(String, unique=True)
     rental_id = Column(Integer, ForeignKey('rentals.id'))
 
     rental = relationship('Rental', back_populates='cars')
