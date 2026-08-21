@@ -1,14 +1,18 @@
 from exceptions import MissingParams
 from database.schemas import IncidentSchema
 from datetime import datetime
+from enums import IncidentType, FuelType
 
 
 class DepositValidator:
     def __init__(self):
-        self._incident_list = []
+        self._incidents = {
+            IncidentType.COLD_ENGINE: [],
+            IncidentType.REDLINING: []
+        }
 
     def _check_thrashing_cold_engine(self, coolant_temp, oil_temp,
-                                     rpm, engine_load):
+                                     rpm, engine_load) -> bool:
         if rpm is None or engine_load is None or coolant_temp is None:
             raise MissingParams
 
@@ -28,9 +32,13 @@ class DepositValidator:
 
         return False
 
+    def _check_redlining(self, rpm, fuel_type: FuelType) -> bool:
+        pass
+
     def _create_schema(self, coolant_temp, oil_temp,
                        rpm, engine_load, desc: str) -> IncidentSchema:
-        new_incident = IncidentSchema(1, desc, datetime.now(), 1, 0, 0)
+        new_incident = IncidentSchema(IncidentType.COLD_ENGINE,
+                                      desc, datetime.now(), 1, 0, 0)
         return new_incident
 
     def check_deposit_rules(self, data: dict) -> dict:
@@ -44,21 +52,20 @@ class DepositValidator:
             'schemas': None,
             'comment': 'Jazda prawidłowa'
         }
-        is_okay = True
 
         comment = 'Jazda prawidłowa'
+
+        new_incidents = []
         try:
             if self._check_thrashing_cold_engine(coolant_temp, oil_temp,
                                                  rpm, load):
-                is_okay = False
-                comment = "ALARM: Agresywna jazda na zimnym silniku (wysokie obciążenie/RPM)"
+                new_incidents.append(IncidentType.COLD_ENGINE)
+            if self._check_redlining():
+                new_incidents.append(IncidentType.REDLINING)
         except MissingParams:
-            is_okay = False
             comment = "BŁĄD: Brak wystarczających danych z czujników do oceny"
 
-        if is_okay:
-            self._incident_list.clear()
-        else:
+        if new_incidents:
             new_schema = self._create_schema(coolant_temp, oil_temp,
                                              rpm, load, comment)
             self._incident_list.append(new_schema)
@@ -66,5 +73,7 @@ class DepositValidator:
                 res['status'] = False
                 res['schemas'] = self._incident_list
                 res['comment'] = comment
+        else:
+            self._incident_list.clear()
 
         return res

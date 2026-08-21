@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enums import FuelType, IncidentType
 
 
 @dataclass
 class IncidentSchema:
-    incident_type: int
+    incident_type: IncidentType
     description: str
     time: datetime
     car_id: int
@@ -14,8 +15,9 @@ class IncidentSchema:
 
 @dataclass
 class CarSchema:
-    rental_id: int
     vin: str
+    rental_id: int
+    fuel_type: FuelType
 
 
 @dataclass
