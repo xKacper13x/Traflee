@@ -1,13 +1,14 @@
-from database.models import Car
-from database.schemas import CarSchema
+from app.database.models import Car
+from app.database.schemas import CarSchema
 
 
 def add(session, car_data: CarSchema) -> Car:
-    new_car = Car(rental_id=car_data.rental_id,
-                  vin=car_data.vin,
-                  fuel_type=car_data.fuel_type)
+    new_car = Car(**car_data.model_dump())
+
     session.add(new_car)
     session.commit()
+    session.refresh(new_car)
+
     return new_car
 
 

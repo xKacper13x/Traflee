@@ -1,4 +1,4 @@
-from database.models import Rental
+from app.database.models import Rental
 
 
 def add(session, name: str) -> Rental:
