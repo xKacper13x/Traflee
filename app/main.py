@@ -16,6 +16,7 @@ session = Session()
 rental.add(session, 'Pierwsza Wypozyczalnia')
 
 deposit_validator = DepositValidator()
+translator = DTCTranslator()
 
 is_connected = False
 while not is_connected:
@@ -29,7 +30,10 @@ while not is_connected:
 
 time.sleep(3)
 running = True
-prev_state = {'was_stationary': True}
+prev_state = {
+    'rpm': 0,
+    'timestamp': time.time
+}
 
 fuel_type = FuelType.PETROL
 car_profile = 'Samochód miejski'
@@ -48,16 +52,12 @@ while running:
         code = error['code']
         raw_description = error['description']
         print('Błąd')
-        # cała kolejność to najpierw redis, potem SQL,
-        # potem znowu pytanie do redisa czy już zapytal AI
-        # i potem pytanie do AI
         code_in_base = dtc_code.find_dtc_translation(session, code,
                                                      car_profile,
                                                      car_brand, fuel_type)
-        if code_in_base is not None and code_in_base.is_verified:
+        if code_in_base is not None:
             print(f'severity: {code_in_base.severity}\nmanager_explanation: {code_in_base.manager_explanation}\naction_required: {code_in_base.action_required}')
         else:
-            translator = DTCTranslator()
             response = translator.analyze_error(code, raw_description,
                                                    fuel_type, car_profile,
                                                    car_brand)
@@ -69,29 +69,15 @@ while running:
                                      is_verified=False)
             dtc_code.add(session, new_code)
 
-    result, is_stationary = deposit_validator.validate_frame(car_data, 1,
-                                                             FuelType.PETROL,
-                                                             prev_state)
-    prev_state['was_stationary'] = is_stationary
+    result, curr_state = deposit_validator.validate_frame(car_data, 1,
+                                                          FuelType.PETROL,
+                                                          prev_state)
+    prev_state = curr_state
 
     for incident_type, schemas_list in result.items():
         incident.add(session, schemas_list[0])
         print(f'{i}. New incident added: {incident_type}')
         i += 1
     time.sleep(0.5)
-
-
-# with open('None_data.csv', 'r') as file_handle:
-#     reader = csv.DictReader(file_handle)
-#     car_data = {
-#         'rpm': None,
-#         'load': None,
-#         'coolant_temp': None
-#     }
-#     for row in reader:
-#         car_data['rpm'] = float(row['RPM'])
-#         car_data['load'] = float(row['load'])
-#         car_data['coolant_temp'] = row.get('coolant_temp', 20)
-#         res = deposit_validator.check_deposit_rules(car_data)
 
 session.close()

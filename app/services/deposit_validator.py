@@ -1,4 +1,3 @@
-from app.core.exceptions import MissingParams
 from app.database.schemas import IncidentSchema
 from datetime import datetime
 from app.core.enums import IncidentType, FuelType
@@ -32,8 +31,8 @@ class DepositValidator:
 
     def _check_thrashing_cold_engine(self, coolant_temp, oil_temp,
                                      rpm, engine_load, fuel_type) -> bool:
-        if rpm is None or engine_load is None or coolant_temp is None:
-            raise MissingParams
+        if None in (coolant_temp, oil_temp, rpm, engine_load, fuel_type):
+            return False
 
         if oil_temp is not None:
             is_cold = oil_temp < 65
@@ -119,15 +118,13 @@ class DepositValidator:
         load = data.get('load')
 
         new_incidents = []
-        try:
-            if self._check_thrashing_cold_engine(coolant_temp, oil_temp,
-                                                 rpm, load, fuel_type):
-                desc = 'Katuje auto na zimnym'
-                new_incidents.append((IncidentType.COLD_ENGINE, desc))
-            else:
-                self._incidents[IncidentType.COLD_ENGINE].clear()
-        except MissingParams:
-            comment = "BŁĄD: Brak wystarczających danych z czujników do oceny"
+
+        if self._check_thrashing_cold_engine(coolant_temp, oil_temp,
+                                             rpm, load, fuel_type):
+            desc = 'Katuje auto na zimnym'
+            new_incidents.append((IncidentType.COLD_ENGINE, desc))
+        else:
+            self._incidents[IncidentType.COLD_ENGINE].clear()
 
         is_peeling_out, new_state = self._check_peeling_out(data,
                                                             previous_state,

@@ -23,10 +23,6 @@ class DTCTranslator:
                       fuel_type: FuelType, car_profile: str,
                       car_brand: str) -> DTCAnalysisResponse:
 
-        # ---------------------------------------------------------------------
-        # WARSTWA 1: REGUŁY SZTYWNE (HARDCODED SAFETY RULES)
-        # Chronią przed halucynacjami AI w kwestii krytycznego bezpieczeństwa
-        # ---------------------------------------------------------------------
         desc_lower = raw_desc.lower()
         code_upper = dtc_code.upper()
 
@@ -51,9 +47,6 @@ class DTCTranslator:
                                        manager_explanation="Krytyczne ryzyko natychmiastowego zatarcia silnika z powodu braku smarowania.",
                                        action_required="Wymagane natychmiastowe wyłączenie silnika.")
 
-        # ---------------------------------------------------------------------
-        # WARSTWA 2: ANALIZA AI (Dla błędów eksploatacyjnych, czujników, filtrów itp.)
-        # ---------------------------------------------------------------------
         system_prompt = """Jesteś ekspertem telematycznym i analitykiem ryzyka w wypożyczalni samochodów.
             Twoim jedynym zadaniem jest ocena kodu błędu OBD-II pod kątem ryzyka biznesowego i technicznego DLA SPECYFICZNEGO TYPU POJAZDU.
 
@@ -112,7 +105,6 @@ class DTCTranslator:
         Oceń ryzyko, biorąc pod uwagę jak ten specyficzny błąd wpływa na eksploatację TEGO KONKRETNEGO typu auta przez przypadkowego klienta wypożyczalni.
         """
 
-        print('Odpowiedz AI')
         try:
             response = self.client.chat.completions.parse(
                 model="gpt-5.6-luna",
@@ -129,27 +121,8 @@ class DTCTranslator:
 
         except Exception as e:
             print(f"[ERROR] Błąd komunikacji z OpenAI: {e}")
-            return {
-                "severity": "UNKNOWN",
-                "manager_explanation": "Błąd tłumaczenia diagnostyki AI.",
-                "action_required": "Skontaktuj się z mechanikiem."
-            }
-
-
-if __name__ == '__main__':
-    translator = DTCTranslator()
-
-    # Lista testowa symulująca zmianę konfiguracji auta przez użytkownika w aplikacji Traflee
-    test_cases = [
-        'Średni sedan',
-        # 'Samochód dostawczy',
-        # 'Samochód sportowy'
-    ]
-
-    dtc_code = "P0455"
-    desc = ""
-
-    for car_type in test_cases:
-        print(f"\n--- TEST DLA PROFILE: {car_type} ---")
-        response = translator.analyze_error(dtc_code, desc, FuelType.PETROL, car_type, 'Audi')
-        print(f'severity: {response.severity.value}\nmanager_explanation: {response.manager_explanation}\naction_required: {response.action_required}')
+            return DTCAnalysisResponse(
+                severity=DTCCodeSeverity.UNKNOWN,
+                manager_explanation="Błąd tłumaczenia diagnostyki AI.",
+                action_required="Skontaktuj się z mechanikiem."
+            )
