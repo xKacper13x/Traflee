@@ -5,12 +5,6 @@ from app.core.enums import IncidentType, FuelType
 
 class DepositValidator:
     def __init__(self):
-        self._incidents = {
-            IncidentType.COLD_ENGINE: [],
-            IncidentType.REDLINING: [],
-            IncidentType.PEELING_OUT: []
-        }
-
         self._MAX_SPEED = 20
         self._MIN_RPM_SPIKE_PER_SEC = {
             FuelType.PETROL: 1500,
@@ -29,8 +23,14 @@ class DepositValidator:
             FuelType.DIESEL: 4500
         }
 
-    def _check_thrashing_cold_engine(self, coolant_temp, oil_temp,
-                                     rpm, engine_load, fuel_type) -> bool:
+    def _check_thrashing_cold_engine(self, current_data: dict,
+                                     fuel_type: FuelType) -> bool:
+        """Required keys: 'rpm', 'coolant_temp', 'oil_temp', 'load'."""
+        rpm = current_data.get('rpm')
+        coolant_temp = current_data.get('coolant_temp')
+        oil_temp = current_data.get('oil_temp')
+        engine_load = current_data.get('load')
+
         if None in (coolant_temp, oil_temp, rpm, engine_load, fuel_type):
             return False
 
@@ -53,7 +53,12 @@ class DepositValidator:
 
         return False
 
-    def _check_redlining(self, rpm, speed, fuel_type) -> bool:
+    def _check_redlining(self, current_data: dict,
+                         fuel_type: FuelType) -> bool:
+        """Required keys: 'rpm', 'speed'."""
+        rpm = current_data.get('rpm')
+        speed = current_data.get('speed')
+
         if rpm is None or speed is None:
             return False
 
@@ -70,6 +75,7 @@ class DepositValidator:
 
     def _check_peeling_out(self, current_data: dict, previous_state: dict,
                            fuel_type: FuelType) -> tuple[bool, dict]:
+        """Required keys: 'rpm', 'speed', 'timestamp'."""
         rpm = current_data.get('rpm')
         speed = current_data.get('speed')
         current_time = current_data.get('timestamp')
@@ -101,30 +107,38 @@ class DepositValidator:
 
         return is_peeling_out, new_state
 
-    def _create_schema(self, incident_type, coolant_temp, oil_temp,
-                       rpm, engine_load, desc: str,
+    def _create_schema(self, incident_type, current_data: dict, desc: str,
                        car_id: int) -> IncidentSchema:
+        """
+        Required keys: 'rpm', 'speed', 'timestamp', 'coolant_temp',
+        'oil_temp',.
+        """
+        rpm = current_data.get('rpm')
+        speed = current_data.get('speed')
+        timestamp = datetime.fromtimestamp(current_data.get('timestamp'))
+        coolant_temp = current_data.get('coolant_temp')
+        oil_temp = current_data.get('oil_temp')
+        engine_load = current_data.get('load')
+
         new_incident = IncidentSchema(incident_type, desc,
-                                      datetime.now(), car_id, 0, 0)
+                                      timestamp, car_id, 0, 0)
         return new_incident
 
     def validate_frame(self, data: dict, car_id: int,
                        fuel_type: FuelType,
                        previous_state: dict) -> tuple[dict, dict]:
-        coolant_temp = data.get('coolant_temp')
-        oil_temp = data.get('oil_temp')
-        rpm = data.get('rpm')
-        speed = data.get('speed')
-        load = data.get('load')
-
         new_incidents = []
+        incidents = previous_state.get('incidents', {
+                                        IncidentType.COLD_ENGINE: [],
+                                        IncidentType.REDLINING: [],
+                                        IncidentType.PEELING_OUT: []
+                                        })
 
-        if self._check_thrashing_cold_engine(coolant_temp, oil_temp,
-                                             rpm, load, fuel_type):
+        if self._check_thrashing_cold_engine(data, fuel_type):
             desc = 'Katuje auto na zimnym'
             new_incidents.append((IncidentType.COLD_ENGINE, desc))
         else:
-            self._incidents[IncidentType.COLD_ENGINE].clear()
+            incidents[IncidentType.COLD_ENGINE].clear()
 
         is_peeling_out, new_state = self._check_peeling_out(data,
                                                             previous_state,
@@ -133,23 +147,23 @@ class DepositValidator:
             desc = 'Start z piskiem'
             new_incidents.append((IncidentType.PEELING_OUT, desc))
         else:
-            self._incidents[IncidentType.PEELING_OUT].clear()
+            incidents[IncidentType.PEELING_OUT].clear()
 
-        if self._check_redlining(rpm, speed, fuel_type):
+        if self._check_redlining(data, fuel_type):
             desc = 'Odcinka'
             new_incidents.append((IncidentType.REDLINING, desc))
         else:
-            self._incidents[IncidentType.REDLINING].clear()
+            incidents[IncidentType.REDLINING].clear()
 
         res = {}
         for incident, desc in new_incidents:
-            new_incident_schema = self._create_schema(incident, coolant_temp,
-                                                      oil_temp, rpm, load,
+            new_incident_schema = self._create_schema(incident, data,
                                                       desc, car_id)
-            self._incidents[incident].append(new_incident_schema)
+            incidents[incident].append(new_incident_schema)
 
-            if incident == IncidentType.PEELING_OUT or len(self._incidents[incident]) > 3:
-                res[incident] = list(self._incidents[incident])
-                self._incidents[incident].clear()
+            if incident == IncidentType.PEELING_OUT or len(incidents[incident]) > 3:
+                res[incident] = list(incidents[incident])
+                incidents[incident].clear()
 
+        new_state['incidents'] = incidents
         return res, new_state
