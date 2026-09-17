@@ -1,6 +1,6 @@
 from app.services.car_data_reader import CarDataReader
 from app.database.db_config import engine, Session
-from app.database.crud import rental, incident, dtc_code, car
+from app.database.crud import incident, dtc_code, car
 from app.core.fleet_monitor import FleetMonitor
 import app.database.models as models
 import time
@@ -8,8 +8,6 @@ import time
 
 models.Base.metadata.create_all(engine)
 session = Session()
-
-rental.add(session, 'Pierwsza Wypozyczalnia')
 
 is_connected = False
 while not is_connected:
