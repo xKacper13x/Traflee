@@ -10,7 +10,7 @@ Local car rental companies often suffer financial losses due to customers aggres
 
 * **Real-time OBD-II Ingestion:** Continuously extracts core engine metrics (RPM, engine load, coolant temperature, and ECU voltage) using Bluetooth ELM327 adapters.
 * **Smart Diagnostics (DTC):** Parses standard OBD-II Diagnostic Trouble Codes to monitor vehicle health and translate mechanical faults.
-* **Deposit Guardian Logic:** A decoupled validation engine that detects vehicle thrashing (e.g., high RPM and heavy load on a cold engine) using custom exception handling for hardware sensor dropouts.
+* **Deposit Guardian Logic:** A decoupled validation engine that detects vehicle thrashing (e.g., high RPM and heavy load on a cold engine).
 * **Relational Database Storage:** Maps fleet assets to rental accounts and persists validated rule violations using SQLite and SQLAlchemy ORM.
 
 ## 🛠️ Technology Stack

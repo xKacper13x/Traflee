@@ -12,12 +12,8 @@ def add(session, car_data: CarSchema) -> Car:
     return new_car
 
 
-# Trzeba przemyśleć czy usuwac auto z bazy,
-# czy tylko  odpinać je od wypożyczalni
-# def remove(session, car_id: int) -> None:
-#     obj_to_del = session.query(Car).filter(Car.id == car_id).first()
-#     session.delete(obj_to_del)
-#     session.commit()
+def get_by_devide_id(session, device_id: str) -> Car | None:
+    return session.query(Car).filter(Car.device_id == device_id).first()
 
 
 def get_by_id(session, car_id: int) -> Car | None:

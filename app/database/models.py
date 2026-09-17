@@ -5,7 +5,6 @@ from sqlalchemy import (Column, Integer, String, ForeignKey,
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.enums import FuelType, IncidentType, DTCCodeSeverity
-import datetime
 
 
 class TimestampMixin:
@@ -39,9 +38,12 @@ class Car(Base, TimestampMixin):
     __tablename__ = 'cars'
 
     id = Column(Integer, primary_key=True)
+    device_id = Column(String, unique=True, nullable=False, index=True)
     vin = Column(String, unique=True)
     rental_id = Column(Integer, ForeignKey('rentals.id'))
     fuel_type = Column(SQLEnum(FuelType), nullable=False)
+    car_profile = Column(String, nullable=False)
+    car_brand = Column(String, nullable=False)
 
     rental = relationship('Rental', back_populates='cars')
     incidents = relationship('Incident', back_populates='car')

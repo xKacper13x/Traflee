@@ -113,7 +113,6 @@ class DTCTranslator:
                     {"role": "user", "content": user_prompt}
                 ],
                 response_format=DTCAnalysisResponse,
-                # temperature=0.1
                 reasoning_effort='high'
             )
 

@@ -17,7 +17,6 @@ class CarDataReader:
         self._connection.watch(obd.commands.ELM_VOLTAGE)
         self._connection.watch(obd.commands.DISTANCE_W_MIL)
         self._connection.watch(obd.commands.GET_DTC)
-        # self._connection.watch(obd.commands.GET_PENDING_DTC)
         self._connection.watch(obd.commands.RPM)
         self._connection.watch(obd.commands.SPEED)
         self._connection.watch(obd.commands.ACCELERATOR_POS_D)
@@ -59,7 +58,6 @@ class CarDataReader:
             raise ConnectionAbortedError('Connection lost during runtime')
 
         dtc_response = self._connection.query(obd.commands.GET_DTC)
-        # pendind_dtc_response = self._connection.query(obd.commands.GET_PENDING_DTC)
         print(len(dtc_response.value))
         if not dtc_response.is_null():
             for code_tuple in dtc_response.value:
@@ -78,7 +76,8 @@ class CarDataReader:
             'load': None,
             'coolant_temp': None,
             'oil_temp': None,
-            'ecu_voltage': None
+            'ecu_voltage': None,
+            'timestamp': time.time()
         }
 
         if not self.is_connected:
@@ -122,11 +121,9 @@ class CarDataReader:
             raise ConnectionAbortedError('Connection lost during runtime')
 
         print("Wysyłam żądanie skasowania błędów (Mode 04)...")
-        # CLEAR_DTC zawsze ma response.value == None w python-obd, więc nie sprawdzamy is_null()
         self._connection.query(obd.commands.CLEAR_DTC)
 
         time.sleep(2)
-        # Sprawdzamy stan po kasowaniu:
         remaining_errors = self.get_diagnostic_codes()
         if len(remaining_errors) == 0:
             print("Sukces! Pamięć błędów wyczyszczona.")

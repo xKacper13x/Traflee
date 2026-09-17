@@ -16,6 +16,8 @@ class CarSchema(BaseModel):
     vin: str
     rental_id: int
     fuel_type: FuelType
+    car_profile: str
+    car_brand: str
 
 
 class UserSchema(BaseModel):
