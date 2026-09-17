@@ -14,6 +14,7 @@ class IncidentSchema(BaseModel):
 
 class CarSchema(BaseModel):
     vin: str
+    device_id: str
     rental_id: int
     fuel_type: FuelType
     car_profile: str

@@ -29,8 +29,12 @@ fleet_monitor = FleetMonitor(session)
 current_car = car.get_by_id(session, 1)
 
 while running:
-    new_metrics = data_reader.get_current_metrics()
-    codes = data_reader.get_diagnostic_codes()
+    try:
+        new_metrics = data_reader.get_current_metrics()
+        codes = data_reader.get_diagnostic_codes()
+    except ConnectionAbortedError:
+        print('Lost connection')
+        time.sleep(3)
 
     result = fleet_monitor.run_cycle(current_car, new_metrics,
                                      codes)
@@ -39,7 +43,7 @@ while running:
     for code_to_save in codes_to_save:
         dtc_code.add(session, code_to_save)
 
-    for incident_type, schemas_list in result.items():
+    for incident_type, schemas_list in new_incidents.items():
         incident.add(session, schemas_list[0])
 
     time.sleep(0.5)
