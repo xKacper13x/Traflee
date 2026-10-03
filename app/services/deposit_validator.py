@@ -1,4 +1,4 @@
-from app.database.schemas import IncidentSchema
+from app.schemas.schemas import IncidentSchema
 from datetime import datetime
 from app.core.enums import IncidentType, FuelType
 

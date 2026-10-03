@@ -1,5 +1,5 @@
 from app.database.models import Incident
-from app.database.schemas import IncidentSchema
+from app.schemas.schemas import IncidentSchema
 
 
 def add(session, incident_info: IncidentSchema) -> Incident:

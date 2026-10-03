@@ -1,5 +1,5 @@
 from app.database.models import DTCCode
-from app.database.schemas import DTCCodeSchema
+from app.schemas.schemas import DTCCodeSchema
 from app.core.enums import FuelType
 
 

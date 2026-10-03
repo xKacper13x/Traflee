@@ -2,7 +2,7 @@ from app.database.models import Car
 from app.database.crud import dtc_code
 from app.services.deposit_validator import DepositValidator
 from app.services.dtc_translator import DTCTranslator
-from app.database.schemas import DTCCodeSchema
+from app.schemas.schemas import DTCCodeSchema
 from dataclasses import dataclass
 import time
 
