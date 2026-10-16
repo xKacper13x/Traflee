@@ -1,4 +1,4 @@
-from app.schemas.schemas import IncidentSchema
+from app.schemas.incident_schemas import IncidentCreate
 from datetime import datetime
 from app.core.enums import IncidentType, FuelType
 
@@ -108,7 +108,7 @@ class DepositValidator:
         return is_peeling_out, new_state
 
     def _create_schema(self, incident_type, current_data: dict, desc: str,
-                       car_id: int) -> IncidentSchema:
+                       car_id: int) -> IncidentCreate:
         """
         Required keys: 'rpm', 'speed', 'timestamp', 'coolant_temp',
         'oil_temp',.
@@ -120,7 +120,7 @@ class DepositValidator:
         oil_temp = current_data.get('oil_temp')
         engine_load = current_data.get('load')
 
-        new_incident = IncidentSchema(incident_type, desc,
+        new_incident = IncidentCreate(incident_type, desc,
                                       timestamp, car_id, 0, 0)
         return new_incident
 

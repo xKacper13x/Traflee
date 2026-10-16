@@ -80,3 +80,17 @@ class DTCCode(Base, TimestampMixin):
         UniqueConstraint('code', 'car_type', 'car_brand',
                          'fuel_type', name='uq_dtc_profile'),
     )
+
+
+class CarDTC(Base, TimestampMixin):
+    __tablename__ = 'car_dtc'
+
+    id = Column(Integer, primary_key=True)
+    car_id = Column(Integer, ForeignKey('cars.id'), nullable=False)
+    dtc_id = Column(Integer, ForeignKey('dtc_codes.id'), nullable=False)
+    detected_at = Column(DateTime, server_default=func.now(), nullable=False)
+    resolved_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    car = relationship('Car', backref='dtc_history')
+    dtc_info = relationship('DTCCode')

@@ -1,9 +1,9 @@
 from app.database.models import DTCCode
-from app.schemas.schemas import DTCCodeSchema
+from app.schemas.dtc_code_schemas import DTCCodeBase
 from app.core.enums import FuelType
 
 
-def add(session, code_data: DTCCodeSchema) -> DTCCode:
+def add(session, code_data: DTCCodeBase) -> DTCCode:
     new_code = DTCCode(**code_data.model_dump())
 
     session.add(new_code)
@@ -25,3 +25,12 @@ def find_dtc_translation(session, code: str, car_type: str, car_brand: str,
         DTCCode.car_brand == car_brand,
         DTCCode.fuel_type == fuel_type
     ).first()
+
+
+def change_verification_status(session, code: DTCCode) -> DTCCode:
+    code.is_verified = not code.is_verified
+
+    session.commit()
+    session.refresh(code)
+
+    return code

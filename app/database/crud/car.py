@@ -34,7 +34,7 @@ def update_car(session, car: Car, updated_car_data: CarUpdate) -> Car:
         setattr(car, field, value)
 
     session.commit()
-    session.refresh
+    session.refresh(car)
 
     return car
 
